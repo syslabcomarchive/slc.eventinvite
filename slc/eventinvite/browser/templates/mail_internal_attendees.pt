@@ -1,0 +1,16 @@
+<tal:root define="
+        dummy python:request.RESPONSE.setHeader('Content-Type', 'text/plain;; charset=UTF-8');
+        lt string:&lt;;
+        gt string:&gt;;
+        event nocall:options/event;
+        recipient options/recipient;
+        sender options/sender;">
+
+Dear <span tal:replace="recipient" />,
+
+<span tal:replace="python:sender.getProperty('fullname') or sender.getId()" />
+invites you to the event <a tal:content="event/title" tal:attributes="href event/absolute_url"/>.
+
+Kind regards
+The website team
+</tal:root>

@@ -1,0 +1,14 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:browser="http://namespaces.zope.org/browser"
+    i18n_domain="slc.eventinvite">
+
+    <browser:page
+        for="Products.ATContentTypes.interfaces.IATEvent"
+        name="invite_attendees"
+        class=".invite.EventInvite"
+        layer="slc.eventinvite.interfaces.IProductLayer"
+        permission="cmf.AddPortalContent"
+        />
+
+</configure>

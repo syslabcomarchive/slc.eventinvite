@@ -27,6 +27,7 @@ setup(name='slc.eventinvite',
         'setuptools',
         'Products.CMFNotification>=2.3-dev',
         'Products.CMFPlone',
+        'vs.event',
         'archetypes.schemaextender',
       ],
       entry_points="""

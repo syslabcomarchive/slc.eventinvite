@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<layers>
+  <layer
+      name="slc.eventinvite"
+      interface="slc.eventinvite.interfaces.IProductLayer"
+      />
+</layers>
