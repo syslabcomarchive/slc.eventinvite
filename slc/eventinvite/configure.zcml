@@ -18,8 +18,6 @@
 
     <include package=".browser" />
 
-    <cmf:registerDirectory name="eventinvite"/>
-
     <adapter
         for="vs.event.content.event.VSEvent"
         provides="slc.eventinvite.adapter.IAttendeesStorage"
