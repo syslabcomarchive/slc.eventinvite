@@ -25,7 +25,7 @@ setup(name='slc.eventinvite',
       zip_safe=False,
       install_requires=[
         'setuptools',
-        'Products.CMFNotification>=2.3-dev',
+        'Products.CMFNotification>=2.3b1',
         'Products.CMFPlone',
         'vs.event',
         'archetypes.schemaextender',
