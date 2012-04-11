@@ -117,7 +117,10 @@ class EventInviteForm(ExtensibleForm, z3cform.Form):
         for key in ['internal_attendees', 'external_attendees']:
             widget_value = self.request.get('form.widgets.%s' % key)
             if not widget_value:
-                widget_value = storage.get(key)
+                if key == 'internal_attendees':
+                    widget_value = [k['id'] for k in storage.get(key, [])]
+                else:
+                    widget_value = storage.get(key)
             if widget_value: 
                 self.widgets[key].value = widget_value
 
@@ -130,23 +133,14 @@ class EventInviteForm(ExtensibleForm, z3cform.Form):
         site = portal_url.getPortalObject()
         email_from_name = site.getProperty('email_from_name')
         email_from_address  = site.getProperty('email_from_address')
-
         for key in ['internal_attendees', 'external_attendees']:
             mail_template = ViewPageTemplateFile('templates/mail_%s.pt' % key)
             for recipient in data[key]:
-                if key == 'internal_attendees':
-                    recipient = mtool.getMemberById(recipient)
-                    mto = recipient.getProperty('email')
-                    recipient_name = recipient.getProperty('fullname', None) or recipient.id
-                else:
-                    mto = recipient['email']
-                    recipient_name = recipient['name']
-                del recipient
-                if not mto:
+                if not recipient['email']:
                     continue
                 mail_text = mail_template(
                                 self,
-                                recipient=recipient_name,
+                                recipient=recipient['name'],
                                 sender=member,
                                 email_from_name=email_from_name,
                                 email_from_address=email_from_address,
@@ -154,7 +148,7 @@ class EventInviteForm(ExtensibleForm, z3cform.Form):
                 try:
                     host.send(
                         mail_text, 
-                        mto=mto,
+                        mto=recipient['email'],
                         mfrom=u'%s <%s>' % (email_from_name, email_from_address),
                         subject=_("You have been invited to an event."), 
                         immediate=True
@@ -162,8 +156,23 @@ class EventInviteForm(ExtensibleForm, z3cform.Form):
                 except SMTPRecipientsRefused:
                     self.status = \
                         _(u"Error: %s's email address, %s, was rejected by the " \
-                          u"server." % (recipient_name, mto))
+                          u"server." % (recipient['name'], recipient['email']))
 
+    def _save_attendees(self, data):
+        context = aq_inner(self.context)
+        mtool = getToolByName(context, 'portal_membership')
+        storage = IAttendeesStorage(context)
+        storage.internal_attendees = [] 
+        for username in data['internal_attendees']:
+            member = mtool.getMemberById(username)
+            storage.internal_attendees.append({
+                'name': member.getProperty('fullname', None) or member.id,
+                'email': member.getProperty('email'),
+                'id': member.id,
+                })
+        storage.external_attendees = data['external_attendees']
+        return {'internal_attendees': storage.internal_attendees,
+                'external_attendees': storage.external_attendees}
 
     @button.handler(IEventInviteFormButtons['email_all'])
     def email_all(self, action):
@@ -171,18 +180,12 @@ class EventInviteForm(ExtensibleForm, z3cform.Form):
         if errors:
             self.status = '\n'.join([error.error.__str__() for error in errors])
             return 
-
-        context = aq_inner(self.context)
-        storage = IAttendeesStorage(context)
-        storage.internal_attendees = data['internal_attendees']
-        storage.external_attendees = data['external_attendees']
-
+        data = self._save_attendees(data)
         self._email_recipients(data)
         addStatusMessage(self.request, 
                         "Attendees have been saved and notified",
                         type='info')
         self.request.response.redirect(self.context.REQUEST.get('URL'))
-
 
     @button.handler(IEventInviteFormButtons['email_new'])
     def email_new(self, action):
@@ -192,6 +195,7 @@ class EventInviteForm(ExtensibleForm, z3cform.Form):
             return 
 
         context = aq_inner(self.context)
+        mtool = getToolByName(context, 'portal_membership')
         storage = IAttendeesStorage(context)
         new_attendees = {
             'internal_attendees': [],
@@ -200,11 +204,16 @@ class EventInviteForm(ExtensibleForm, z3cform.Form):
         for key in ['internal_attendees', 'external_attendees']:
             for i in data[key]:
                 if i not in storage.get(key, []):
-                    new_attendees[key].append(i)
+                    if key == 'internal_attendees':
+                        member = mtool.getAuthenticatedMember()
+                        storage.internal_attendees.append({
+                            'name': member.getProperty('fullname', None) or member.id,
+                            'email': member.getProperty('email')
+                            })
+                    else:
+                        new_attendees[key].append(i)
 
-        storage.internal_attendees = data['internal_attendees']
-        storage.external_attendees = data['external_attendees']
-
+        self._save_attendees(data)
         self._email_recipients(new_attendees)
         if new_attendees['internal_attendees'] or \
                 new_attendees['external_attendees']:
