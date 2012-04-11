@@ -2,7 +2,6 @@ import re
 from zope import interface
 from zope import schema
 
-
 from z3c.form import field
 from z3c.form import form as z3cform
 from z3c.form import button

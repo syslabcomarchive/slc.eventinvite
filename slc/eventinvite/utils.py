@@ -7,14 +7,15 @@ from slc.eventinvite import MessageFactory as _
 def save_attendees(context, data):
     mtool = getToolByName(context, 'portal_membership')
     storage = IAttendeesStorage(context)
-    storage.internal_attendees = [] 
+    internal_attendees = [] 
     for username in data['internal_attendees']:
         member = mtool.getMemberById(username)
-        storage.internal_attendees.append({
+        internal_attendees.append({
             'name': member.getProperty('fullname', None) or member.id,
             'email': member.getProperty('email'),
             'id': member.id,
             })
+    storage.internal_attendees = internal_attendees
     storage.external_attendees = data['external_attendees']
     return {'internal_attendees': storage.internal_attendees,
             'external_attendees': storage.external_attendees}

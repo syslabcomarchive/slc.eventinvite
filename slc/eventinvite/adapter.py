@@ -36,9 +36,7 @@ class AttendeesStorage(object):
         """ """
         if not IAnnotatable.providedBy(self.context):
             alsoProvides(self.context, IAnnotatable)
-
-        if not IAnnotations(self.context).has_key(ANNOTATION_KEY):
-            IAnnotations(self.context)[ANNOTATION_KEY] = {attr: value}
-        else:
-            IAnnotations(self.context)[ANNOTATION_KEY][attr] = value
+        d = IAnnotations(self.context).get(ANNOTATION_KEY, {})
+        d[attr] = value
+        IAnnotations(self.context)[ANNOTATION_KEY] = d
 
