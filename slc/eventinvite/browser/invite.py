@@ -142,7 +142,8 @@ class EventInviteForm(ExtensibleForm, z3cform.Form):
                     mto = recipient['email']
                     recipient_name = recipient['name']
                 del recipient
-
+                if not mto:
+                    continue
                 mail_text = mail_template(
                                 self,
                                 recipient=recipient_name,
@@ -192,19 +193,24 @@ class EventInviteForm(ExtensibleForm, z3cform.Form):
 
         context = aq_inner(self.context)
         storage = IAttendeesStorage(context)
-        new_int_atts = data['internal_attendees'] - storage.internal_attendees
-        new_ext_atts = data['external_attendees'] - storage.external_attendees 
+        new_attendees = {
+            'internal_attendees': [],
+            'external_attendees': []
+            }
+        for key in ['internal_attendees', 'external_attendees']:
+            for i in data[key]:
+                if i not in storage.get(key, []):
+                    new_attendees[key].append(i)
 
         storage.internal_attendees = data['internal_attendees']
         storage.external_attendees = data['external_attendees']
 
-        data['internal_attendees'] = storage.internal_attendees
-        data['external_attendees'] = storage.external_attendees
-
-        self._email_recipients(data)
-        addStatusMessage(self.request, 
-                        "The new attendees have been added and notified.",
-                        type='info')
+        self._email_recipients(new_attendees)
+        if new_attendees['internal_attendees'] or \
+                new_attendees['external_attendees']:
+            addStatusMessage(self.request, 
+                            "The new attendees have been added and notified.",
+                            type='info')
         self.request.response.redirect(self.context.REQUEST.get('URL'))
 
 
