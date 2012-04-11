@@ -11,4 +11,12 @@
         permission="cmf.AddPortalContent"
         />
 
+    <browser:page
+        for="Products.ATContentTypes.interfaces.IATEvent"
+        name="confirm_attendance"
+        class=".confirm.ConfirmAttendance"
+        layer="slc.eventinvite.interfaces.IProductLayer"
+        permission="zope2.View"
+        />
+
 </configure>
