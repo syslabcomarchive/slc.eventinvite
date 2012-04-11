@@ -47,6 +47,7 @@ def email_recipients(view, context, data):
                     subject=_("You have been invited to an event."), 
                     immediate=True,
                     charset='utf-8',
+                    msg_type='text/html',
                     )
             except SMTPRecipientsRefused:
                 view.status = \
