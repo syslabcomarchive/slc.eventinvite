@@ -135,16 +135,17 @@ class EventInviteForm(ExtensibleForm, z3cform.Form):
             mail_template = ViewPageTemplateFile('templates/mail_%s.pt' % key)
             for recipient in data[key]:
                 if key == 'internal_attendees':
+                    recipient = mtool.getMemberById(recipient)
                     mto = recipient.getProperty('email')
-                    recipient = recipient.getProperty('Fullname') or \
-                                                            recipient.id
+                    recipient_name = recipient.getProperty('fullname', None) or recipient.id
                 else:
                     mto = recipient['email']
-                    recipient = recipient['name']
+                    recipient_name = recipient['name']
+                del recipient
 
                 mail_text = mail_template(
                                 self,
-                                recipient=recipient,
+                                recipient=recipient_name,
                                 sender=member,
                                 email_from_name=email_from_name,
                                 email_from_address=email_from_address,
@@ -159,8 +160,8 @@ class EventInviteForm(ExtensibleForm, z3cform.Form):
                         )
                 except SMTPRecipientsRefused:
                     self.status = \
-                        _(u"Error: %s's email address was rejected by the " \
-                          u"server." % recipient)
+                        _(u"Error: %s's email address, %s, was rejected by the " \
+                          u"server." % (recipient_name, mto))
 
 
     @button.handler(IEventInviteFormButtons['email_all'])
