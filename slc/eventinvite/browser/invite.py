@@ -153,17 +153,20 @@ class EventInviteForm(ExtensibleForm, z3cform.Form):
             'internal_attendees': [],
             'external_attendees': []
             }
-        for key in ['internal_attendees', 'external_attendees']:
-            for i in data[key]:
-                if i not in storage.get(key, []):
-                    if key == 'internal_attendees':
-                        member = mtool.getMemberById(i)
-                        new_attendees.append({
-                            'name': member.getProperty('fullname', None) or member.id,
-                            'email': member.getProperty('email')
-                            })
-                    else:
-                        new_attendees[key].append(i)
+        memberids = [k['id'] for k in storage.get('internal_attendees', [])]
+        for memberid in data.get('internal_attendees', []):
+            if memberid in memberids:
+                continue
+            member = mtool.getMemberById(memberid)
+            new_attendees['internal_attendees'].append({
+                'name': member.getProperty('fullname', None) or member.id,
+                'email': member.getProperty('email')
+                })
+
+        for entry in data.get('external_attendees', []):
+            if entry in storage.get('external_attendees', []):
+                continue
+            new_attendees['external_attendees'].append(entry)
 
         save_attendees(context, data)
         email_recipients(self, context, new_attendees)
