@@ -18,18 +18,18 @@ class AttendeesStorage(object):
 
     def get(self, attr, default=None):
         try:
-            return self.__get__(attr)
+            return self.__getattr__(attr)
         except AttributeError:
             return default
 
-    def __get__(self, attr):
+    def __getattr__(self, key):
         """ """
-        if not IAnnotatable.providedBy(self.context):
-            alsoProvides(self.context, IAnnotatable)
-
-        annos = IAnnotations(self.context).get(ANNOTATION_KEY, {})
-        if annos.get(attr): 
-            return annos[attr]
+        context = self.__dict__['context']
+        if not IAnnotatable.providedBy(context):
+            alsoProvides(context, IAnnotatable)
+        annos = IAnnotations(context).get(ANNOTATION_KEY, {})
+        if annos.has_key(key): 
+            return annos[key]
         raise AttributeError
     
     def __setattr__(self, attr, value):
