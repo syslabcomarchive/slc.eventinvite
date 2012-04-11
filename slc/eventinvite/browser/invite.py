@@ -1,9 +1,7 @@
 import re
-from smtplib import SMTPRecipientsRefused
 from zope import interface
 from zope import schema
 
-from zope.app.pagetemplate.viewpagetemplatefile import ViewPageTemplateFile
 
 from z3c.form import field
 from z3c.form import form as z3cform
@@ -27,6 +25,8 @@ from Products.UserAndGroupSelectionWidget.z3cform.widget import \
                                         UsersAndGroupsSelectionFieldWidget
 
 from slc.eventinvite import MessageFactory as _
+from slc.eventinvite.utils import save_attendees
+from slc.eventinvite.utils import email_recipients 
 from slc.eventinvite.adapter import IAttendeesStorage
 
 def isEmail(value):
@@ -124,55 +124,7 @@ class EventInviteForm(ExtensibleForm, z3cform.Form):
             if widget_value: 
                 self.widgets[key].value = widget_value
 
-    def _email_recipients(self, data):
-        context = aq_inner(self.context)
-        mtool = getToolByName(context, 'portal_membership')
-        member = mtool.getAuthenticatedMember()
-        host = getToolByName(context, 'MailHost')
-        portal_url = getToolByName(context, 'portal_url')
-        site = portal_url.getPortalObject()
-        email_from_name = site.getProperty('email_from_name')
-        email_from_address  = site.getProperty('email_from_address')
-        for key in ['internal_attendees', 'external_attendees']:
-            mail_template = ViewPageTemplateFile('templates/mail_%s.pt' % key)
-            for recipient in data[key]:
-                if not recipient['email']:
-                    continue
-                mail_text = mail_template(
-                                self,
-                                recipient=recipient['name'],
-                                sender=member,
-                                email_from_name=email_from_name,
-                                email_from_address=email_from_address,
-                                event=context)
-                try:
-                    host.send(
-                        mail_text, 
-                        mto=recipient['email'],
-                        mfrom=u'%s <%s>' % (email_from_name, email_from_address),
-                        subject=_("You have been invited to an event."), 
-                        immediate=True
-                        )
-                except SMTPRecipientsRefused:
-                    self.status = \
-                        _(u"Error: %s's email address, %s, was rejected by the " \
-                          u"server." % (recipient['name'], recipient['email']))
 
-    def _save_attendees(self, data):
-        context = aq_inner(self.context)
-        mtool = getToolByName(context, 'portal_membership')
-        storage = IAttendeesStorage(context)
-        storage.internal_attendees = [] 
-        for username in data['internal_attendees']:
-            member = mtool.getMemberById(username)
-            storage.internal_attendees.append({
-                'name': member.getProperty('fullname', None) or member.id,
-                'email': member.getProperty('email'),
-                'id': member.id,
-                })
-        storage.external_attendees = data['external_attendees']
-        return {'internal_attendees': storage.internal_attendees,
-                'external_attendees': storage.external_attendees}
 
     @button.handler(IEventInviteFormButtons['email_all'])
     def email_all(self, action):
@@ -180,8 +132,8 @@ class EventInviteForm(ExtensibleForm, z3cform.Form):
         if errors:
             self.status = '\n'.join([error.error.__str__() for error in errors])
             return 
-        data = self._save_attendees(data)
-        self._email_recipients(data)
+        data = save_attendees(self.context, data)
+        email_recipients(self, self.context, data)
         addStatusMessage(self.request, 
                         "Attendees have been saved and notified",
                         type='info')
@@ -205,16 +157,16 @@ class EventInviteForm(ExtensibleForm, z3cform.Form):
             for i in data[key]:
                 if i not in storage.get(key, []):
                     if key == 'internal_attendees':
-                        member = mtool.getAuthenticatedMember()
-                        storage.internal_attendees.append({
+                        member = mtool.getMemberById(i)
+                        new_attendees.append({
                             'name': member.getProperty('fullname', None) or member.id,
                             'email': member.getProperty('email')
                             })
                     else:
                         new_attendees[key].append(i)
 
-        self._save_attendees(data)
-        self._email_recipients(new_attendees)
+        save_attendees(context, data)
+        email_recipients(self, context, new_attendees)
         if new_attendees['internal_attendees'] or \
                 new_attendees['external_attendees']:
             addStatusMessage(self.request, 
