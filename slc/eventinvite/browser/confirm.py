@@ -32,7 +32,7 @@ class ConfirmAttendanceForm(ExtensibleForm, z3cform.Form):
     buttons = button.Buttons(IConfirmAttendanceFormButtons)
 
     @button.handler(IConfirmAttendanceFormButtons['save'])
-    def email_all(self, action):
+    def save_confirmation(self, action):
         data, errors = self.extractData()
         if errors:
             self.status = '\n'.join([error.error.__str__() for error in errors])
