@@ -19,7 +19,7 @@
     <include package=".browser" />
 
     <adapter
-        for="vs.event.content.event.VSEvent"
+        for="Products.ATContentTypes.content.event.ATEvent"
         provides="slc.eventinvite.adapter.IAttendeesStorage"
         factory="slc.eventinvite.adapter.AttendeesStorage"
         />
