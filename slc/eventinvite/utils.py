@@ -69,18 +69,17 @@ def email_recipients(view, context, data):
             send_email(context, recipient, mail_template)
 
     gtool = getToolByName(context, 'portal_groups')
-    for group in data.get('groups', []):
-        for gdict in data[key]:
-            group = gtool.getGroupById(gdict['name'])
-            if group is None:
-                log.error("Could not get group '%s'" % gdict['name'])
+    for gdict in data.get('groups', []):
+        group = gtool.getGroupById(gdict['name'])
+        if group is None:
+            log.error("Could not get group '%s'" % gdict['name'])
+            continue
+        for member in group.getGroupMembers():
+            recipient = {}
+            recipient['name'] = member.getProperty('fullname', member.id)
+            recipient['email'] = member.getProperty('email')
+            if not recipient['email']:
                 continue
-            for member in group.getGroupMembers():
-                recipient = {}
-                recipient['name'] = member.getProperty('fullname', member.id)
-                recipient['email'] = member.getProperty('email')
-                if not recipient['email']:
-                    continue
-                send_email(context, recipient, mail_template)
+            send_email(context, recipient, mail_template)
 
 
