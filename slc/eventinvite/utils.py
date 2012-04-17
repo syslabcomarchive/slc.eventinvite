@@ -8,22 +8,23 @@ def save_attendees(context, data):
     mtool = getToolByName(context, 'portal_membership')
     gtool = getToolByName(context, 'portal_groups')
     storage = IAttendeesStorage(context)
+    group_ids = gtool.getGroupIds()
     internal_attendees = [] 
     groups = []
     for name in data['internal_attendees']:
-        group = gtool.getGroupById(name)
-        if group is None:
+        if name in group_ids:
+            group = gtool.getGroupById(name)
+            groups.append({
+                'name': group.id,
+                'confirmation': [], # Will contain list of userids of group 
+                                    # members who have confirmed attendence
+                })
+        else:
             member = mtool.getMemberById(name)
             internal_attendees.append({
                 'name': member.getProperty('fullname', None) or member.id,
                 'email': member.getProperty('email'),
                 'id': member.id,
-                })
-        else:
-            groups.append({
-                'name': group.id,
-                'confirmation': [], # Will contain list of userids of group 
-                                    # members who have confirmed attendence
                 })
     storage.internal_attendees = internal_attendees
     storage.external_attendees = data['external_attendees']
@@ -74,7 +75,7 @@ def email_recipients(view, context, data):
 
     for group in data.get('groups', []):
         # XXX: During confirmation, we need to somehow be aware from which group the user is...
-        mail_template = ViewPageTemplateFile('browser/templates/mail_internal_attendees.pt' % key)
+        mail_template = ViewPageTemplateFile('browser/templates/mail_internal_attendees.pt')
         for group in data[key]:
             for member in group.getGroupMembers():
                 recipient = {}
