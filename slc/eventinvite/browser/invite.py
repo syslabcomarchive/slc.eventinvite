@@ -12,7 +12,6 @@ from plone.directives import form
 
 from Products.Archetypes.utils import addStatusMessage
 from Products.validation.validators.BaseValidators import EMAIL_RE
-from Products.CMFCore.utils import getToolByName
 
 from plone.z3cform.fieldsets.extensible import ExtensibleForm
 from plone.z3cform.layout import FormWrapper
@@ -24,8 +23,7 @@ from Products.UserAndGroupSelectionWidget.z3cform.widget import \
                                         UsersAndGroupsSelectionFieldWidget
 
 from slc.eventinvite import MessageFactory as _
-from slc.eventinvite.utils import save_attendees
-from slc.eventinvite.utils import email_recipients 
+from slc.eventinvite import utils 
 from slc.eventinvite.adapter import IAttendeesStorage
 
 def isEmail(value):
@@ -123,16 +121,14 @@ class EventInviteForm(ExtensibleForm, z3cform.Form):
             if widget_value: 
                 self.widgets[key].value = widget_value
 
-
-
     @button.handler(IEventInviteFormButtons['email_all'])
     def email_all(self, action):
         data, errors = self.extractData()
         if errors:
             self.status = '\n'.join([error.error.__str__() for error in errors])
             return 
-        data = save_attendees(self.context, data)
-        email_recipients(self, self.context, data)
+        data = utils.save_attendees(self.context, data)
+        utils.email_recipients(self.context, data)
         addStatusMessage(self.request, 
                         "Attendees have been saved and notified",
                         type='info')
@@ -146,29 +142,9 @@ class EventInviteForm(ExtensibleForm, z3cform.Form):
             return 
 
         context = aq_inner(self.context)
-        mtool = getToolByName(context, 'portal_membership')
-        storage = IAttendeesStorage(context)
-        new_attendees = {
-            'internal_attendees': [],
-            'external_attendees': []
-            }
-        memberids = [k['id'] for k in storage.get('internal_attendees', [])]
-        for memberid in data.get('internal_attendees', []):
-            if memberid in memberids:
-                continue
-            member = mtool.getMemberById(memberid)
-            new_attendees['internal_attendees'].append({
-                'name': member.getProperty('fullname', None) or member.id,
-                'email': member.getProperty('email')
-                })
-
-        for entry in data.get('external_attendees', []):
-            if entry in storage.get('external_attendees', []):
-                continue
-            new_attendees['external_attendees'].append(entry)
-
-        save_attendees(context, data)
-        email_recipients(self, context, new_attendees)
+        new_attendees = utils.get_new_attendees(context, data)
+        utils.save_attendees(context, data)
+        utils.email_recipients(context, new_attendees)
         if new_attendees['internal_attendees'] or \
                 new_attendees['external_attendees']:
             addStatusMessage(self.request, 

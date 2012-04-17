@@ -55,3 +55,4 @@ class ConfirmAttendanceForm(ExtensibleForm, z3cform.Form):
 class ConfirmAttendance(FormWrapper):
     """ """
     form = ConfirmAttendanceForm 
+

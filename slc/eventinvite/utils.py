@@ -57,9 +57,9 @@ def send_email(context, recipient, mailview):
                 u"server." % (recipient['name'], recipient['email'])))
 
 
-def email_recipients(view, context, data):
+def email_recipients(context, data):
     mail_template = component.getMultiAdapter(
-                                    (context, view.request),
+                                    (context, context.REQUEST),
                                     name="mail_attendees")
 
     for key in ['internal_attendees', 'external_attendees']:
@@ -83,3 +83,37 @@ def email_recipients(view, context, data):
             send_email(context, recipient, mail_template)
 
 
+def get_new_attendees(context, data):
+    """ Gets newly added attendees and returns a dictionary in the proper format.
+    """
+    mtool = getToolByName(context, 'portal_membership')
+    gtool = getToolByName(context, 'portal_groups')
+    group_ids = gtool.getGroupIds()
+    storage = IAttendeesStorage(context)
+    new_attendees = {
+        'internal_attendees': [],
+        'external_attendees': [],
+        'groups': [],
+        }
+    old_names = [k['id'] for k in storage.get('internal_attendees', [])]
+    old_groups = [k['name'] for k in storage.get('groups', [])]
+    # Groups in the same widget as internal users so is stored under
+    # 'internal_attendees'. We'll have to deal with them here...
+    for name in data.get('internal_attendees', []):
+        if name in group_ids and name not in old_groups:
+            # Group
+            group = gtool.getGroupById(name)
+            new_attendees['groups'].append({'name': group.id})
+        elif name not in old_names:
+            # User
+            member = mtool.getMemberById(name)
+            new_attendees['internal_attendees'].append({
+                'name': member.getProperty('fullname', None) or member.id,
+                'email': member.getProperty('email')
+                })
+
+    for entry in data.get('external_attendees', []):
+        if entry in storage.get('external_attendees', []):
+            continue
+        new_attendees['external_attendees'].append(entry)
+    return new_attendees
