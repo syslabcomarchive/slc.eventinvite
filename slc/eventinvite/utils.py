@@ -72,6 +72,9 @@ def email_recipients(view, context, data):
     for group in data.get('groups', []):
         for gdict in data[key]:
             group = gtool.getGroupById(gdict['name'])
+            if group is None:
+                log.error("Could not get group '%s'" % gdict['name'])
+                continue
             for member in group.getGroupMembers():
                 recipient = {}
                 recipient['name'] = member.getProperty('fullname', member.id)
