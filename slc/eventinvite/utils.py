@@ -1,8 +1,11 @@
+import logging
 from smtplib import SMTPRecipientsRefused
-from zope.app.pagetemplate.viewpagetemplatefile import ViewPageTemplateFile
+from zope import component
 from Products.CMFCore.utils import getToolByName
 from slc.eventinvite.adapter import IAttendeesStorage
 from slc.eventinvite import MessageFactory as _
+
+log = logging.getLogger(__name__)
 
 def save_attendees(context, data):
     mtool = getToolByName(context, 'portal_membership')
@@ -34,48 +37,38 @@ def save_attendees(context, data):
             'groups': storage.groups,
             }
 
-def send_email(view, context, recipient, template):
+def send_email(context, recipient, mailview):
+    host = getToolByName(context, 'MailHost')
     mtool = getToolByName(context, 'portal_membership')
     member = mtool.getAuthenticatedMember()
-    host = getToolByName(context, 'MailHost')
-    portal_url = getToolByName(context, 'portal_url')
-    site = portal_url.getPortalObject()
-    email_from_name = site.getProperty('email_from_name')
-    email_from_address  = site.getProperty('email_from_address')
-    mail_text = template(
-                    view,
-                    recipient=recipient['name'],
-                    sender=member,
-                    email_from_name=email_from_name,
-                    email_from_address=email_from_address,
-                    event=context)
     try:
         host.send(
-            mail_text, 
+            mailview.render(recipient['name']), 
             mto=recipient['email'],
-            mfrom=u'%s <%s>' % (email_from_name, email_from_address),
-            subject=_("You have been invited to an event."), 
+            mfrom=u'%s <%s>' % (mailview.email_from_name[0], 
+                                mailview.email_from_address[0]),
+            subject=context.Title().decode('utf-8'), 
             immediate=True,
             charset='utf-8',
             msg_type='text/html',
             )
     except SMTPRecipientsRefused:
-        view.status = \
-            _(u"Error: %s's email address, %s, was rejected by the " \
-                u"server." % (recipient['name'], recipient['email']))
+        log.error(_(u"Error: %s's email address, %s, was rejected by the " \
+                u"server." % (recipient['name'], recipient['email'])))
 
 
 def email_recipients(view, context, data):
+    mail_template = component.getMultiAdapter(
+                                    (context, view.request),
+                                    name="mail_attendees")
+
     for key in ['internal_attendees', 'external_attendees']:
-        mail_template = ViewPageTemplateFile('browser/templates/mail_%s.pt' % key)
         for recipient in data[key]:
             if not recipient['email']:
                 continue
-            send_email(view, context, recipient, mail_template)
+            send_email(context, recipient, mail_template)
 
     for group in data.get('groups', []):
-        # XXX: During confirmation, we need to somehow be aware from which group the user is...
-        mail_template = ViewPageTemplateFile('browser/templates/mail_internal_attendees.pt')
         for group in data[key]:
             for member in group.getGroupMembers():
                 recipient = {}
@@ -83,5 +76,6 @@ def email_recipients(view, context, data):
                 recipient['email'] = member.getProperty('email')
                 if not recipient['email']:
                     continue
-                send_email(view, context, recipient, mail_template)
+                send_email(context, recipient, mail_template)
+
 

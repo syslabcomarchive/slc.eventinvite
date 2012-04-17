@@ -1,14 +1,12 @@
 <tal:root define="
-        dummy python:request.RESPONSE.setHeader('Content-Type', 'text/plain;; charset=UTF-8');
+        dummy python:request.RESPONSE.setHeader('Content-Type', 'text/html;; charset=UTF-8');
         lt string:&lt;;
         gt string:&gt;;
-        event nocall:options/event;
-        recipient options/recipient;
-        sender options/sender;">
+        event nocall:view/context">
 
-Dear <span tal:replace="recipient" />,
+Dear <span tal:replace="view/recipient" />,
 
-<tal:sender replace="python:sender.getProperty('fullname') or sender.getId()"
+<tal:sender replace="python:view.sender.getProperty('fullname') or view.sender.getId()"
 /> invites you to the event <a tal:content="event/title" tal:attributes="href
 event/absolute_url">Event Name</a> on <tal:date replace="event/startDate"/>.
 
