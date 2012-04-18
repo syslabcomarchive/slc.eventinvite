@@ -67,7 +67,6 @@ class TestContent(unittest.TestCase, TestMixin):
                 ],
             'internal_attendees': [
                     'Administrators',
-                    'Reviewers',
                     'Site Administrators',
                     'andreas-ebersbacher',
                     'jan-keller',
@@ -83,7 +82,6 @@ class TestContent(unittest.TestCase, TestMixin):
             ], 
             'groups': [
                 {'name': 'Administrators'}, 
-                {'name': 'Reviewers'}, 
                 {'name': 'Site Administrators'}
             ], 
             'external_attendees': [
@@ -100,7 +98,22 @@ class TestContent(unittest.TestCase, TestMixin):
                   'groups': [], 
                   'external_attendees': []})
 
+        data = {
+            'external_attendees': [
+                    {'email': 'piet@mail.com', 'name': 'Piet Pompies'},
+                    {'email': 'jane@mail.com', 'name': 'Jane Doe'}
+                ],
+            'internal_attendees': [
+                    'Reviewers',
+                    'Site Administrators',
+                    'max-musterman',
+                    'jan-keller',
+                ]
+            }
+        new_attendees = utils.get_new_attendees(event, data)
+        control_new_attendees = {
+            'internal_attendees': [{'name': 'Max Musterman', 'email': 'max@mail.com'}], 
+            'groups': [{'name': 'Reviewers'}],
+            'external_attendees': [{'email': 'piet@mail.com', 'name': 'Piet Pompies'}]}
 
-
-
-
+        self.assertEqual(new_attendees, control_new_attendees)
