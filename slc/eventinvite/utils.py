@@ -84,7 +84,32 @@ def email_recipients(context, data):
 
 
 def get_new_attendees(context, data):
-    """ Gets newly added attendees and returns a dictionary in the proper format.
+    """ Gets newly added attendees and returns a dictionary in the proper 
+        format.
+
+        $data is a dict, whose required format is the same as would be 
+        submitted to the request by the z3c.form widgets as defined
+        in browser/invite.py
+
+        Here's an example:
+        {
+            'external_attendees': [
+                    {'email': 'max@mail.com', 'name': 'Max Mustermann'},
+                    {'email': 'john@mail.com', 'name': 'John Doe'}
+            ],
+            'internal_attendees': [
+                    'Administrators',
+                    'Reviewers',
+                    'Site Administrators',
+                    'andreas-ebersbacher',
+                    'jan-keller',
+                    'werner-wechsler'
+            ]
+        }
+
+        Important to note is that Groups and Plone users are both listed under
+        'internal_attendees' (due to UserAndGroupSelectionWidget), but that
+        they must be separated into two groups in the returned dict.
     """
     mtool = getToolByName(context, 'portal_membership')
     gtool = getToolByName(context, 'portal_groups')
@@ -100,7 +125,9 @@ def get_new_attendees(context, data):
     # Groups in the same widget as internal users so is stored under
     # 'internal_attendees'. We'll have to deal with them here...
     for name in data.get('internal_attendees', []):
-        if name in group_ids and name not in old_groups:
+        if name in group_ids:
+            if name in old_groups:
+                continue
             # Group
             group = gtool.getGroupById(name)
             new_attendees['groups'].append({'name': group.id})
@@ -117,3 +144,4 @@ def get_new_attendees(context, data):
             continue
         new_attendees['external_attendees'].append(entry)
     return new_attendees
+

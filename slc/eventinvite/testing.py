@@ -13,8 +13,10 @@ class EventInviteFixture(PloneSandboxLayer):
     
     def setUpZope(self, app, configurationContext):
         # Load ZCML
+        import five.grok
         import slc.eventinvite
         import Products.UserAndGroupSelectionWidget
+        xmlconfig.file('configure.zcml', five.grok, context=configurationContext)
         xmlconfig.file('configure.zcml', slc.eventinvite, context=configurationContext)
         xmlconfig.file('configure.zcml', Products.UserAndGroupSelectionWidget, context=configurationContext)
         installProduct(app, 'Products.UserAndGroupSelectionWidget')
@@ -28,14 +30,21 @@ class TestMixin(object):
         portal = self.layer['portal']
         test_users = [
             # username, password, group
-            ('max-musterman', 'password1', ''),
-            ('john-doe', 'password2', ''),
-            ('jan-rap', 'password3', 'Administrators'),
+            ('max-musterman', 'Max Musterman', 'max@mail.com', ''),
+            ('john-doe', 'John Doe', 'john@mail.com', ''),
+            ('jan-rap', 'Jan Rap', 'janrap@mail.com', 'Administrators'),
+            ('andreas-ebersbacher', 'Andreas Ebersbacher', 'andreas@mail.com', ''),
+            ('jan-keller', 'Jan Keller', 'jan@mail.com', 'Reviewers'),
+            ('werner-wechsler', 'Werner Wechsler', 'werner@mail.com', 'Reviewers'),
             ]
 
-        for username, password, group in test_users:
+        for username, fullname, email, group in test_users:
             if username not in portal.acl_users.getUserIds():
-                portal.portal_registration.addMember(username, password)
+                membership = portal.portal_membership
+                membership.addMember(username, 'secret', [], [])
+                member = membership.getMemberById(username)
+                member.setMemberProperties(
+                            {'fullname': fullname, 'email': email})
                 if group:
                     portal.portal_groups.addPrincipalToGroup(username, group)
 
@@ -44,12 +53,12 @@ SLC_EVENTINVITE_FIXTURE = EventInviteFixture()
 SLC_EVENTINVITE_INTEGRATION_TESTING = \
         IntegrationTesting(
                 bases=(SLC_EVENTINVITE_FIXTURE,), 
-                name="DistanceLearning:Integration"
+                name="EventInvite:Integration"
                 )
 
 SLC_EVENTINVITE_FUNCTIONAL_TESTING = \
         FunctionalTesting(
                 bases=(SLC_EVENTINVITE_FIXTURE,), 
-                name="DistanceLearning:Functional"
+                name="EventInvite:Functional"
                 )
 

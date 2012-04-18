@@ -27,6 +27,7 @@ setup(name='slc.eventinvite',
         'setuptools',
         'Products.CMFPlone',
         'Products.UserAndGroupSelectionWidget',
+        'five.grok',
       ],
       entry_points="""
       [z3c.autoinclude.plugin]
