@@ -9,7 +9,8 @@
 Dear <span tal:replace="recipient" />,
 
 <span tal:replace="python:sender.getProperty('fullname') or sender.getId()" />
-invites you to the event <a tal:content="event/title" tal:attributes="href event/absolute_url"/>.
+invites you to the event <a tal:content="event/title" tal:attributes="href string:${event/absolute_url}/@@confirm_attendees"/>.
+
 
 Kind regards
 The website team
