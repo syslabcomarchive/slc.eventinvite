@@ -2,6 +2,7 @@ import unittest2 as unittest
 
 from plone.testing import z2
 from plone.app.testing import SITE_OWNER_NAME
+from plone.app.testing import login
 
 from slc.eventinvite import utils
 from slc.eventinvite.testing import TestMixin
@@ -51,7 +52,7 @@ class TestContent(unittest.TestCase, TestMixin):
             {'name': 'John Smith', 'email': 'john@mail.com'}])
 
         self.assertEqual(storage.groups, [
-            {'name': 'Administrators', 'confirmation':[]}])
+            {'attending': {'Maybe': [], 'Yes': [], 'No': []}, 'name': 'Administrators'}])
 
     def test_get_new_attendees(self):
         """ """
@@ -117,3 +118,42 @@ class TestContent(unittest.TestCase, TestMixin):
             'external_attendees': [{'email': 'piet@mail.com', 'name': 'Piet Pompies'}]}
 
         self.assertEqual(new_attendees, control_new_attendees)
+
+
+    def test_confirmation(self):
+        portal = self.layer['portal']
+        app = self.layer['app']
+        z2.login(app['acl_users'], SITE_OWNER_NAME)
+        self.register_users()
+        event = self._create_event()
+        data = {
+            'internal_attendees': ['max-musterman', 'john-doe','Administrators', 'Reviewers'],
+            'external_attendees': [{'name':'John Smith', 
+                                    'email':'john@mail.com',}],
+        }
+        utils.save_attendees(event, data)
+        storage = IAttendeesStorage(event)
+
+        login(portal, 'max-musterman')
+        utils.save_confirmation(event, 'Yes')
+        usernames = [i['id'] for i in storage.internal_attendees]
+        self.assertTrue('max-musterman' in usernames)
+        self.assertEqual(
+                storage.internal_attendees[usernames.index('max-musterman')]['attending'],
+                'Yes')
+        self.assertEqual(utils.get_confirmation(event), 'Yes')
+
+        utils.save_confirmation(event, 'No')
+        self.assertEqual(utils.get_confirmation(event), 'No')
+
+        utils.save_confirmation(event, 'Maybe')
+        self.assertEqual(utils.get_confirmation(event), 'Maybe')
+
+        login(portal, 'john-doe')
+        utils.save_confirmation(event, 'Maybe')
+        self.assertEqual(utils.get_confirmation(event), 'Maybe')
+
+        utils.save_confirmation(event, 'No')
+        self.assertEqual(utils.get_confirmation(event), 'No')
+
+
