@@ -19,8 +19,7 @@ def save_attendees(context, data):
             group = gtool.getGroupById(name)
             groups.append({
                 'name': group.id,
-                'confirmation': [], # Will contain list of userids of group 
-                                    # members who have confirmed attendence
+                'attending': {'Yes':[], 'No':[], 'Maybe':[]}, 
                 })
         else:
             member = mtool.getMemberById(name)
@@ -81,6 +80,15 @@ def email_recipients(context, data):
             if not recipient['email']:
                 continue
             send_email(context, recipient, mail_template)
+
+
+def get_invited_groups(context):
+    storage = IAttendeesStorage(context)
+    return [g['name'] for g in storage.get('groups', [])]
+
+def get_invited_usernames(context):
+    storage = IAttendeesStorage(context)
+    return [m['id'] for m in storage.get('internal_attendees', [])]
 
 
 def get_new_attendees(context, data):
@@ -145,3 +153,54 @@ def get_new_attendees(context, data):
         new_attendees['external_attendees'].append(entry)
     return new_attendees
 
+
+def save_confirmation(context, confirmation):
+    mtool = getToolByName(context, 'portal_membership')
+    gtool = getToolByName(context, 'portal_groups')
+    storage = IAttendeesStorage(context)
+    member = mtool.getAuthenticatedMember()
+    # If the user belongs to any invited groups, store the user's confirmation
+    # for those groups.
+    member_groups = member.getGroups()
+    member_groups.remove('AuthenticatedUsers')
+    if member_groups:
+        group_dicts = storage.groups
+        invited_groups = get_invited_groups(context)
+        groups_to_confirm = [g for g in member_groups if g in invited_groups]
+        for group in groups_to_confirm:
+            group_dicts[group]['attending'][confirmation] = member.id
+        storage.groups = group_dicts
+    
+    # If the user was (also) invited individually, store the confirmation under
+    # internal_attendees
+    if member.id in get_invited_usernames(context):
+        internal_attendees = storage.get('internal_attendees', [])
+        for att in internal_attendees:   
+            if att['id'] == member.id:
+                att['attending'] = confirmation 
+        storage.internal_attendees = internal_attendees
+
+
+def get_confirmation(context):
+    mtool = getToolByName(context, 'portal_membership')
+    member = mtool.getAuthenticatedMember()
+    storage = IAttendeesStorage(context)
+    # See if user was invited individually
+    invited_usernames = get_invited_usernames(context)
+    if member.id in invited_usernames: 
+        index = invited_usernames.index(member.id)
+        return storage.internal_attendees[index].get('attending', None)
+    # Get the first invited group that the user belongs to and return his
+    # confirmation status.
+    member_groups = member.getGroups()
+    all_invited_groups = get_invited_groups(context)
+    invited_groups = [g for g in member_groups if g in all_invited_groups]
+    if invited_groups:
+        invited_group = invited_groups[0]
+        if member.id in invited_group['attending']['Yes']:
+            return 'Yes'
+        elif member.id in invited_group['attending']['No']:
+            return 'No'
+        elif member.id in invited_group['attending']['Maybe']:
+            return 'Maybe'
+    
