@@ -8,7 +8,6 @@ from zExceptions import NotFound
 from plone.z3cform.fieldsets.extensible import ExtensibleForm
 from plone.z3cform.layout import FormWrapper
 from Products.Archetypes.utils import addStatusMessage
-from Products.CMFCore.utils import getToolByName
 from slc.eventinvite import MessageFactory as _
 from slc.eventinvite import utils
 from slc.eventinvite.adapter import IAttendeesStorage
@@ -66,13 +65,7 @@ class ConfirmAttendance(FormWrapper):
     def __call__(self, **kw):
         """ Check whether the current user was invited. If not we return a 404.
         """
-        mtool = getToolByName(self.context, 'portal_membership')
-        member = mtool.getAuthenticatedMember()
-        if member.id not in utils.get_invited_usernames(self.context):
-            member_groups = member.getGroups()
-            all_invited_groups = utils.get_invited_groups(self.context)
-            invited_groups = [g for g in member_groups if g in all_invited_groups]
-            if not invited_groups:
-                raise NotFound
-        return super(ConfirmAttendanceForm, self).__call__(**kw)
+        if not self.is_user_invited(self.context):
+            raise NotFound
+        return super(ConfirmAttendance, self).__call__(**kw)
 

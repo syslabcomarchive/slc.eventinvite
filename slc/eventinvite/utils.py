@@ -7,6 +7,19 @@ from slc.eventinvite import MessageFactory as _
 
 log = logging.getLogger(__name__)
 
+def is_user_invited(context):
+    mtool = getToolByName(context, 'portal_membership')
+    member = mtool.getAuthenticatedMember()
+    if member.id not in get_invited_usernames(context):
+        member_groups = member.getGroups()
+        if not member_groups:
+            return False
+        all_invited_groups = get_invited_groups(context)
+        invited_groups = [g for g in member_groups if g in all_invited_groups]
+        if not invited_groups:
+            return False
+    return True
+
 def save_attendees(context, data):
     mtool = getToolByName(context, 'portal_membership')
     gtool = getToolByName(context, 'portal_groups')
@@ -162,7 +175,8 @@ def save_confirmation(context, confirmation):
     # If the user belongs to any invited groups, store the user's confirmation
     # for those groups.
     member_groups = member.getGroups()
-    member_groups.remove('AuthenticatedUsers')
+    if 'AuthenticatedUsers' in member_groups:
+        member_groups.remove('AuthenticatedUsers')
     if member_groups:
         group_dicts = storage.groups
         invited_groups = get_invited_groups(context)
