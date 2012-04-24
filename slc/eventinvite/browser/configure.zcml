@@ -5,7 +5,7 @@
 
     <browser:page
         for="Products.ATContentTypes.interfaces.IATEvent"
-        name="invite_attendees"
+        name="invite-attendees"
         class=".invite.EventInvite"
         layer="slc.eventinvite.interfaces.IProductLayer"
         permission="cmf.AddPortalContent"
@@ -13,7 +13,7 @@
 
     <browser:page
         for="Products.ATContentTypes.interfaces.IATEvent"
-        name="confirm_attendance"
+        name="confirm-attendance"
         class=".confirm.ConfirmAttendance"
         layer="slc.eventinvite.interfaces.IProductLayer"
         permission="zope2.View"
