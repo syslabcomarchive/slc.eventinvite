@@ -182,7 +182,11 @@ def save_confirmation(context, confirmation):
         invited_groups = get_invited_groups(context)
         groups_to_confirm = [g for g in member_groups if g in invited_groups]
         for group in groups_to_confirm:
-            group_dicts[group]['attending'][confirmation] = member.id
+            group_dicts[group]['attending'][confirmation].append({
+                'name': member.getProperty('fullname', None) or member.id,
+                'email': member.getProperty('email'),
+                'id': member.id,
+            })
         storage.groups = group_dicts
     
     # If the user was (also) invited individually, store the confirmation under
