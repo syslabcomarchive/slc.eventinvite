@@ -65,7 +65,7 @@ class ConfirmAttendance(FormWrapper):
     def __call__(self, **kw):
         """ Check whether the current user was invited. If not we return a 404.
         """
-        if not self.is_user_invited(self.context):
+        if not self.is_invited(self.context):
             raise NotFound
         return super(ConfirmAttendance, self).__call__(**kw)
 

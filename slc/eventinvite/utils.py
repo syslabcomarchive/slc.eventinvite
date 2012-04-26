@@ -7,14 +7,16 @@ from slc.eventinvite import MessageFactory as _
 
 log = logging.getLogger(__name__)
 
-def is_user_invited(context):
-    mtool = getToolByName(context, 'portal_membership')
+def is_invited(event):
+    """ Check whether the current user is invited to the event.
+    """
+    mtool = getToolByName(event, 'portal_membership')
     member = mtool.getAuthenticatedMember()
-    if member.id not in get_invited_usernames(context):
+    if member.id not in get_invited_usernames(event):
         member_groups = member.getGroups()
         if not member_groups:
             return False
-        all_invited_groups = get_invited_groups(context)
+        all_invited_groups = get_invited_groups(event)
         invited_groups = [g for g in member_groups if g in all_invited_groups]
         if not invited_groups:
             return False
