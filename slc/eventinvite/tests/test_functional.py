@@ -37,8 +37,7 @@ class TestFunctional(unittest.TestCase, TestMixin):
         browser.getControl(name='__ac_password').value = TEST_USER_PASSWORD
         browser.getControl(name='submit').click()
 
-        # XXX: This browser view does not exist anymore
-        #browser.open('%s/@@invite_attendees' % portal['plone-conference'].absolute_url())
+        browser.open('%s/@@invite-attendees' % portal['plone-conference'].absolute_url())
         # XXX: Can't set the value of the UserAndGroupSelectionWidget because the <select> 
         # doesn't have any <option> elements to choose from. Instead it's populated via 
         # javascript which we cannot do via zc.testbrowser.
