@@ -184,11 +184,14 @@ def save_confirmation(context, confirmation):
         invited_groups = get_invited_groups(context)
         groups_to_confirm = [g for g in member_groups if g in invited_groups]
         for group in groups_to_confirm:
-            group_dicts[group]['attending'][confirmation].append({
-                'name': member.getProperty('fullname', None) or member.id,
-                'email': member.getProperty('email'),
-                'id': member.id,
-            })
+            for group_dict in group_dicts:
+                if group_dict['name'] == group:
+                    group_dict['attending'][confirmation].append({
+                        'name': member.getProperty('fullname', None) or member.id,
+                        'email': member.getProperty('email'),
+                        'id': member.id,
+                    })
+                    break
         storage.groups = group_dicts
     
     # If the user was (also) invited individually, store the confirmation under
@@ -217,10 +220,13 @@ def get_confirmation(context):
     invited_groups = [g for g in member_groups if g in all_invited_groups]
     if invited_groups:
         invited_group = invited_groups[0]
-        if member.id in invited_group['attending']['Yes']:
-            return 'Yes'
-        elif member.id in invited_group['attending']['No']:
-            return 'No'
-        elif member.id in invited_group['attending']['Maybe']:
-            return 'Maybe'
+        group_status = storage.groups
+        for group in group_status:
+            if group['name'] == invited_group:
+                if member.id in [x['id'] for x in group['attending']['Yes']]:
+                    return 'Yes'
+                elif member.id in [x['id'] for x in group['attending']['No']]:
+                    return 'No'
+                elif member.id in [x['id'] for x in group['attending']['Maybe']]:
+                    return 'Maybe'
     
