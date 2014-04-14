@@ -45,8 +45,8 @@ class TestContent(unittest.TestCase, TestMixin):
         self.assertTrue(hasattr(storage, 'groups'))
 
         self.assertEqual(storage.internal_attendees, [
-            {'id': 'max-musterman', 'name': 'Max Musterman', 'email': 'max@mail.com'}, 
-            {'id': 'john-doe', 'name': 'John Doe', 'email': 'john@mail.com'}])
+            {'attending': None, 'id': 'max-musterman', 'name': 'Max Musterman', 'email': 'max@mail.com'},
+            {'attending': None, 'id': 'john-doe', 'name': 'John Doe', 'email': 'john@mail.com'}])
 
         self.assertEqual(storage.external_attendees, [
             {'name': 'John Smith', 'email': 'john@mail.com'}])
