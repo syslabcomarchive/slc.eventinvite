@@ -7,6 +7,7 @@ from slc.eventinvite import MessageFactory as _
 
 log = logging.getLogger(__name__)
 
+
 def is_invited(event):
     """ Check whether the current user is invited to the event.
     """
@@ -22,27 +23,28 @@ def is_invited(event):
             return False
     return True
 
+
 def save_attendees(context, data):
     mtool = getToolByName(context, 'portal_membership')
     gtool = getToolByName(context, 'portal_groups')
     storage = IAttendeesStorage(context)
     group_ids = gtool.getGroupIds()
-    internal_attendees = [] 
+    internal_attendees = []
     groups = []
     for name in data['internal_attendees']:
         if name in group_ids:
             group = gtool.getGroupById(name)
             groups.append({
                 'name': group.id,
-                'attending': {'Yes':[], 'No':[], 'Maybe':[]}, 
-                })
+                'attending': {'Yes': [], 'No': [], 'Maybe': []},
+            })
         else:
             member = mtool.getMemberById(name)
             internal_attendees.append({
                 'name': member.getProperty('fullname', None) or member.id,
                 'email': member.getProperty('email'),
                 'id': member.id,
-                })
+            })
     storage.internal_attendees = internal_attendees
     storage.external_attendees = data['external_attendees']
     storage.groups = groups
@@ -51,30 +53,28 @@ def save_attendees(context, data):
             'groups': storage.groups,
             }
 
+
 def send_email(context, recipient, mailview):
     host = getToolByName(context, 'MailHost')
-    mtool = getToolByName(context, 'portal_membership')
-    member = mtool.getAuthenticatedMember()
     try:
         host.send(
-            mailview.render(recipient['name']), 
+            mailview.render(recipient['name']),
             mto=recipient['email'],
-            mfrom=u'%s <%s>' % (mailview.email_from_name[0], 
+            mfrom=u'%s <%s>' % (mailview.email_from_name[0],
                                 mailview.email_from_address[0]),
-            subject=context.Title().decode('utf-8'), 
+            subject=context.Title().decode('utf-8'),
             immediate=True,
             charset='utf-8',
             msg_type='text/html',
-            )
+        )
     except SMTPRecipientsRefused:
-        log.error(_(u"Error: %s's email address, %s, was rejected by the " \
-                u"server." % (recipient['name'], recipient['email'])))
+        log.error(_(u"Error: %s's email address, %s, was rejected by the "
+                    u"server." % (recipient['name'], recipient['email'])))
 
 
 def email_recipients(context, data):
     mail_template = component.getMultiAdapter(
-                                    (context, context.REQUEST),
-                                    name="mail_attendees")
+        (context, context.REQUEST), name="mail_attendees")
 
     for key in ['internal_attendees', 'external_attendees']:
         for recipient in data[key]:
@@ -101,16 +101,17 @@ def get_invited_groups(context):
     storage = IAttendeesStorage(context)
     return [g['name'] for g in storage.get('groups', [])]
 
+
 def get_invited_usernames(context):
     storage = IAttendeesStorage(context)
     return [m['id'] for m in storage.get('internal_attendees', [])]
 
 
 def get_new_attendees(context, data):
-    """ Gets newly added attendees and returns a dictionary in the proper 
+    """ Gets newly added attendees and returns a dictionary in the proper
         format.
 
-        $data is a dict, whose required format is the same as would be 
+        $data is a dict, whose required format is the same as would be
         submitted to the request by the z3c.form widgets as defined
         in browser/invite.py
 
@@ -142,7 +143,7 @@ def get_new_attendees(context, data):
         'internal_attendees': [],
         'external_attendees': [],
         'groups': [],
-        }
+    }
     old_names = [k['id'] for k in storage.get('internal_attendees', [])]
     old_groups = [k['name'] for k in storage.get('groups', [])]
     # Groups in the same widget as internal users so is stored under
@@ -160,7 +161,7 @@ def get_new_attendees(context, data):
             new_attendees['internal_attendees'].append({
                 'name': member.getProperty('fullname', None) or member.id,
                 'email': member.getProperty('email')
-                })
+            })
 
     for entry in data.get('external_attendees', []):
         if entry in storage.get('external_attendees', []):
@@ -171,7 +172,6 @@ def get_new_attendees(context, data):
 
 def save_confirmation(context, confirmation):
     mtool = getToolByName(context, 'portal_membership')
-    gtool = getToolByName(context, 'portal_groups')
     storage = IAttendeesStorage(context)
     member = mtool.getAuthenticatedMember()
     # If the user belongs to any invited groups, store the user's confirmation
@@ -193,14 +193,14 @@ def save_confirmation(context, confirmation):
                     })
                     break
         storage.groups = group_dicts
-    
+
     # If the user was (also) invited individually, store the confirmation under
     # internal_attendees
     if member.id in get_invited_usernames(context):
         internal_attendees = storage.get('internal_attendees', [])
-        for att in internal_attendees:   
+        for att in internal_attendees:
             if att['id'] == member.id:
-                att['attending'] = confirmation 
+                att['attending'] = confirmation
         storage.internal_attendees = internal_attendees
 
 
@@ -210,7 +210,7 @@ def get_confirmation(context):
     storage = IAttendeesStorage(context)
     # See if user was invited individually
     invited_usernames = get_invited_usernames(context)
-    if member.id in invited_usernames: 
+    if member.id in invited_usernames:
         index = invited_usernames.index(member.id)
         return storage.internal_attendees[index].get('attending', None)
     # Get the first invited group that the user belongs to and return his
@@ -229,4 +229,3 @@ def get_confirmation(context):
                     return 'No'
                 elif member.id in [x['id'] for x in group['attending']['Maybe']]:
                     return 'Maybe'
-    
