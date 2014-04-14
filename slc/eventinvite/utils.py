@@ -30,6 +30,11 @@ def save_attendees(context, data):
     storage = IAttendeesStorage(context)
     group_ids = gtool.getGroupIds()
     internal_attendees = []
+    existing_internal_attendees = storage.get('internal_attendees', [])
+    existing_attendance = {}
+    for entry in existing_internal_attendees:
+        existing_attendance[entry["id"]] = entry.get("attending", None)
+
     groups = []
     for name in data['internal_attendees']:
         if name in group_ids:
@@ -40,10 +45,14 @@ def save_attendees(context, data):
             })
         else:
             member = mtool.getMemberById(name)
+            attending = None
+            if member.id in existing_attendance:
+                attending = existing_attendance[member.id]
             internal_attendees.append({
                 'name': member.getProperty('fullname', None) or member.id,
                 'email': member.getProperty('email'),
                 'id': member.id,
+                'attending': attending,
             })
     storage.internal_attendees = internal_attendees
     storage.external_attendees = data['external_attendees']
