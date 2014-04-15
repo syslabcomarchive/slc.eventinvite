@@ -2,7 +2,7 @@
         dummy python:request.RESPONSE.setHeader('Content-Type', 'text/html;; charset=UTF-8');
         lt string:&lt;;
         gt string:&gt;;
-        event nocall:view/context">
+        event nocall:view/context">Subject: <tal:subject replace="python:event.Title().decode('utf-8')">Event Name</tal:subject>
 
 Dear <span tal:replace="view/recipient" />,
 

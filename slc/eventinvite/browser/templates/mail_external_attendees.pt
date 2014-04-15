@@ -4,7 +4,7 @@
         gt string:&gt;;
         event nocall:options/event;
         recipient options/recipient;
-        sender options/sender;">
+        sender options/sender;">Subject: <tal:subject replace="python:event.Title().decode('utf-8')">Event Name</tal:subject>
 
 Dear <span tal:replace="recipient" />,
 

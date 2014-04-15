@@ -71,7 +71,6 @@ def send_email(context, recipient, mailview):
             mto=recipient['email'],
             mfrom=u'%s <%s>' % (mailview.email_from_name[0],
                                 mailview.email_from_address[0]),
-            subject=context.Title().decode('utf-8'),
             immediate=True,
             charset='utf-8',
             msg_type='text/html',
