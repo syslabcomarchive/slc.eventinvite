@@ -73,7 +73,7 @@ def send_email(context, recipient, mailview):
                                 mailview.email_from_address[0]),
             immediate=True,
             charset='utf-8',
-            msg_type='text/html',
+            msg_type='text/plain',
         )
     except SMTPRecipientsRefused:
         log.error(_(u"Error: %s's email address, %s, was rejected by the "
