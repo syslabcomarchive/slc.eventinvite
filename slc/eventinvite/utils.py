@@ -69,8 +69,8 @@ def send_email(context, recipient, mailview):
         host.send(
             mailview.render(recipient['name']),
             mto=recipient['email'],
-            mfrom=u'%s <%s>' % (mailview.email_from_name[0],
-                                mailview.email_from_address[0]),
+            mfrom=u'%s <%s>' % (mailview.email_from_name[0].decode('utf-8'),
+                                mailview.email_from_address[0].decode('utf-8')),
             immediate=True,
             charset='utf-8',
             msg_type='text/plain',
