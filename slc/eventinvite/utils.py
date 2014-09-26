@@ -178,6 +178,13 @@ def get_new_attendees(context, data):
     return new_attendees
 
 
+def remove_confirmations(group_dict, email):
+    for confirmation in group_dict['attending']:
+        group_dict['attending'][confirmation] = [
+            userdict for userdict in group_dict['attending'][confirmation]
+            if not userdict['email'] == email]
+
+
 def save_confirmation(context, confirmation):
     mtool = getToolByName(context, 'portal_membership')
     storage = IAttendeesStorage(context)
@@ -185,6 +192,8 @@ def save_confirmation(context, confirmation):
     # If the user belongs to any invited groups, store the user's confirmation
     # for those groups.
     member_groups = member.getGroups()
+    member_email = member.getProperty('email')
+    member_name = member.getProperty('fullname', None) or member.id
     if 'AuthenticatedUsers' in member_groups:
         member_groups.remove('AuthenticatedUsers')
     if member_groups:
@@ -194,9 +203,10 @@ def save_confirmation(context, confirmation):
         for group in groups_to_confirm:
             for group_dict in group_dicts:
                 if group_dict['name'] == group:
+                    remove_confirmations(group_dict, member_email)
                     group_dict['attending'][confirmation].append({
-                        'name': member.getProperty('fullname', None) or member.id,
-                        'email': member.getProperty('email'),
+                        'name': member_name,
+                        'email': member_email,
                         'id': member.id,
                     })
                     break

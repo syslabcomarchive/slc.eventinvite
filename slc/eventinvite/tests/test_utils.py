@@ -171,3 +171,20 @@ class TestContent(unittest.TestCase, TestMixin):
         login(portal, 'jan-keller')
         utils.save_confirmation(event, 'Yes')
         self.assertEqual(utils.get_confirmation(event), 'Yes')
+
+    def test_change_confirmation_group(self):
+        portal = self.layer['portal']
+        app = self.layer['app']
+        z2.login(app['acl_users'], SITE_OWNER_NAME)
+        self.register_users()
+        event = self._create_event()
+        data = {
+            'internal_attendees': ['Reviewers'],
+            'external_attendees': [],
+        }
+        utils.save_attendees(event, data)
+
+        login(portal, 'jan-keller')
+        utils.save_confirmation(event, 'Yes')
+        utils.save_confirmation(event, 'No')
+        self.assertEqual(utils.get_confirmation(event), 'No')
