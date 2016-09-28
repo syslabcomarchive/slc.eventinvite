@@ -3,3 +3,4 @@
 *.pyc
 Paste*
 slc.eventinvite.egg-info
+/.eggs
