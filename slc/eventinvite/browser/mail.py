@@ -19,10 +19,11 @@ class MailTemplate(grok.View):
         mtool = getToolByName(context, 'portal_membership')
         self.sender = mtool.getAuthenticatedMember()
 
-        portal_url = getToolByName(context, 'portal_url')
-        site = portal_url.getPortalObject()
-        email_from_name = site.getProperty('email_from_name')
-        email_from_address  = site.getProperty('email_from_address')
+        registry = getUtility(IRegistry)
+        mail_settings = registry.forInterface(IMailSchema, prefix='plone')
+
+        email_from_address = mail_settings.email_from_address
+        email_from_name = mail_settings.email_from_name
         self.email_from_name = email_from_name,
         self.email_from_address = email_from_address,
 

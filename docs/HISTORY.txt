@@ -4,7 +4,8 @@ Changelog
 P4.0.1 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Ported email_from_address to IMailSchema. Refs #16300
+  [reinhardt]
 
 
 P4.0.0 (2014-09-29)
