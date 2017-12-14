@@ -1,8 +1,11 @@
 from five import grok
 from zope.app.pagetemplate.viewpagetemplatefile import ViewPageTemplateFile
 from Products.CMFCore.utils import getToolByName
+from Products.CMFPlone.interfaces.controlpanel import IMailSchema
 from Products.ATContentTypes.interfaces import IATEvent
+from plone.registry.interfaces import IRegistry
 from slc.eventinvite.interfaces import IProductLayer
+from zope.component import getUtility
 
 grok.templatedir("templates")
 
@@ -31,5 +34,3 @@ class MailTemplate(grok.View):
         self.recipient = recipient
         template = ViewPageTemplateFile('templates/mail_internal_attendees.pt')
         return template(self)
-
-
