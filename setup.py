@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 
-version = 'P4.0.2'
+version = 'P4.0.3.dev0'
 
 setup(name='slc.eventinvite',
       version=version,
