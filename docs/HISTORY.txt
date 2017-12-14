@@ -1,7 +1,7 @@
 Changelog
 =========
 
-P4.0.2 (unreleased)
+P4.0.2 (2017-12-14)
 -------------------
 
 - Added missing imports. Refs #16300
