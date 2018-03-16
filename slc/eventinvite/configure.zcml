@@ -26,4 +26,10 @@
         factory="slc.eventinvite.adapter.AttendeesStorage"
         />
 
+    <adapter
+        for="plone.app.contenttypes.interfaces.IEvent"
+        provides="slc.eventinvite.adapter.IAttendeesStorage"
+        factory="slc.eventinvite.adapter.AttendeesStorage"
+        />
+
 </configure>

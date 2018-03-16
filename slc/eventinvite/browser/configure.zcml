@@ -12,6 +12,14 @@
         />
 
     <browser:page
+        for="plone.event.interfaces.IEvent"
+        name="invite-attendees"
+        class=".invite.EventInvite"
+        layer="slc.eventinvite.interfaces.IProductLayer"
+        permission="cmf.AddPortalContent"
+        />
+
+    <browser:page
         for="Products.ATContentTypes.interfaces.IATEvent"
         name="confirm-attendance"
         class=".confirm.ConfirmAttendance"
